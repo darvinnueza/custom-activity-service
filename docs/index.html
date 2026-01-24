@@ -1,36 +1,40 @@
 <!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>custom-activity-service API - Swagger UI</title>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>custom-activity-service API Docs</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Swagger UI (CDN) -->
-    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
-    <style>
-        body { margin: 0; background: #0b1220; }
-        #swagger-ui { background: #0b1220; }
-    </style>
-</head>
-<body>
-    <div id="swagger-ui"></div>
+        <!-- Swagger UI (CDN) -->
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"
+        />
+        <style>
+            body { margin: 0; background: #0b1220; }
+        </style>
+    </head>
 
-    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <body>
+        <div id="swagger-ui"></div>
 
-    <script>
-        window.onload = () => {
-        window.ui = SwaggerUIBundle({
-            url: "/swagger.yml",     // <-- tu swagger.yml en la raíz del repo
-            dom_id: "#swagger-ui",
-            deepLinking: true,
-            presets: [
-            SwaggerUIBundle.presets.apis,
-            SwaggerUIStandalonePreset
-            ],
-            layout: "StandaloneLayout"
-        });
-        };
-    </script>
-</body>
+        <!-- Swagger UI (CDN) -->
+        <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+        <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+
+        <script>
+            window.onload = () => {
+                SwaggerUIBundle({
+                url: "/swagger.yml",   // IMPORTANTE: tu contrato en la raíz del proyecto
+                dom_id: "#swagger-ui",
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset,
+                ],
+                layout: "StandaloneLayout",
+                });
+            };
+        </script>
+    </body>
 </html>
