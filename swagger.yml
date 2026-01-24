@@ -1,0 +1,506 @@
+openapi: 3.0.3
+
+info:
+  title: custom-activity-service API
+  version: 1.0.0
+  description: >
+    Service responsible for receiving execution events from Salesforce Marketing Cloud
+    and orchestrating outbound operations against Genesys Cloud.
+    This API is intended for internal integration use only.
+
+servers:
+  - url: https://{host}
+    variables:
+      host:
+        default: custom-activity-service.example.com
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: SFMC
+    description: Salesforce Marketing Cloud integration
+  - name: GENESYS
+    description: Genesys Cloud outbound orchestration
+
+paths:
+
+  /execute:
+    post:
+      tags: [SFMC]
+      summary: Receive execution event from SFMC
+      description: >
+        Endpoint invoked by Salesforce Marketing Cloud Journey Builder when a contact reaches
+        the VoiceBot Custom Activity. This operation is idempotent based on requestId:
+        duplicates are accepted but not reprocessed.
+      operationId: execute
+      parameters:
+        - in: header
+          name: X-Correlation-Id
+          required: false
+          schema:
+            type: string
+          description: Optional correlation identifier for tracing end-to-end requests.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VbEventIn"
+            example:
+              requestId: "REQ-0001"
+              contactKey: "CK-0001"
+              msisdn: "593999000001"
+              contactListId: "331e970c-852c-4c37-903b-896dd1afacd3"
+              campaignId: "e8ff3a36-7ae8-4508-9be1-2ba02c000000"
+              status: "NEW"
+              journeyId: "216b52d4-dbfc-4717-90dc-80a6a1fe4222"
+              activityId: "629f5f20-f855-4525-9ed1-7e02496723a8"
+      responses:
+        "200":
+          description: Event accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecuteResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /genesys/contactlists:
+    get:
+      tags: [GENESYS]
+      summary: List contact lists
+      description: Lists Genesys contact lists for a given divisionId.
+      operationId: listContactLists
+      parameters:
+        - in: query
+          name: divisionId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactListResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags: [GENESYS]
+      summary: Create contact list
+      description: Creates a Genesys contact list used by outbound campaigns.
+      operationId: createContactList
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactListRequest"
+            example:
+              name: "Lista_Clientes_VoiceBot_Claro_1"
+              columnNames:
+                - request_id
+                - contact_key
+                - phone_number
+                - status
+              phoneColumns:
+                - columnName: phone_number
+                  type: cell
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactList"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /genesys/contactlists/{contactListId}/clear:
+    post:
+      tags: [GENESYS]
+      summary: Clear contact list
+      description: Deletes all contacts out of a Genesys contact list.
+      operationId: clearContactList
+      parameters:
+        - in: path
+          name: contactListId
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /genesys/contactlists/{contactListId}/upload:
+    post:
+      tags: [GENESYS]
+      summary: Upload contacts CSV
+      description: Uploads a CSV file with contact data to a Genesys contact list.
+      operationId: uploadContactList
+      parameters:
+        - in: path
+          name: contactListId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadCsvRequest"
+      responses:
+        "202":
+          description: Upload accepted
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /genesys/campaigns:
+    get:
+      tags: [GENESYS]
+      summary: List campaigns
+      description: Lists Genesys outbound campaigns for a given divisionId.
+      operationId: listCampaigns
+      parameters:
+        - in: query
+          name: divisionId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignListResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /genesys/campaigns/{campaignId}:
+    put:
+      tags: [GENESYS]
+      summary: Update campaign
+      description: Updates a Genesys outbound campaign (minimal fields required by this solution).
+      operationId: updateCampaign
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCampaignRequest"
+            example:
+              contactListId: "331e970c-852c-4c37-903b-896dd1afacd3"
+              name: "Campaña_VoiceBot_Claro_1"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /genesys/campaigns/{campaignId}/start:
+    post:
+      tags: [GENESYS]
+      summary: Start campaign
+      description: Starts execution of a Genesys outbound campaign.
+      operationId: startCampaign
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /genesys/campaigns/{campaignId}/stop:
+    post:
+      tags: [GENESYS]
+      summary: Stop campaign
+      description: Stops execution of a Genesys outbound campaign.
+      operationId: stopCampaign
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+
+    VbEventIn:
+      type: object
+      required:
+        - requestId
+        - contactKey
+        - msisdn
+        - contactListId
+        - campaignId
+        - status
+        - journeyId
+        - activityId
+      properties:
+        requestId:
+          type: string
+        contactKey:
+          type: string
+        msisdn:
+          type: string
+          description: "Phone number. Recommended format: 593 + 9 digits for Ecuador."
+        contactListId:
+          type: string
+        campaignId:
+          type: string
+        status:
+          type: string
+        journeyId:
+          type: string
+        activityId:
+          type: string
+
+    ExecuteResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        id:
+          type: integer
+          format: int64
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        details:
+          type: string
+
+    CreateContactListRequest:
+      type: object
+      required:
+        - name
+        - columnNames
+        - phoneColumns
+      properties:
+        name:
+          type: string
+        columnNames:
+          type: array
+          description: >
+            Dynamic list of column names defined by the solution.
+            The schema is not fixed and can vary per campaign.
+          items:
+            type: string
+        phoneColumns:
+          type: array
+          description: Phone number column configuration required by Genesys.
+          items:
+            type: object
+            required:
+              - columnName
+              - type
+            properties:
+              columnName:
+                type: string
+              type:
+                type: string
+
+    UpdateCampaignRequest:
+      type: object
+      description: >
+        Minimal fields used by the solution to update a Genesys campaign.
+        Extend as needed based on the campaign configuration.
+      properties:
+        name:
+          type: string
+        contactListId:
+          type: string
+
+    UploadCsvRequest:
+      type: object
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: >
+            CSV file containing contact data.
+            Columns must match the Contact List definition.
+
+    ContactList:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        divisionId:
+          type: string
+
+    ContactListResponse:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContactList"
+
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        divisionId:
+          type: string
+
+    CampaignListResponse:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Campaign"
