@@ -9,7 +9,7 @@ info:
     This API is intended for internal integration use only.
 
 servers:
-  - url: https://custom-activity-service.vercel.app
+  - url: https://custom-activity-service.vercel.app/api
 
 security:
   - bearerAuth: []
@@ -22,7 +22,7 @@ tags:
 
 paths:
 
-  /api/execute:
+  /execute:
     post:
       tags: [SFMC]
       summary: Receive execution event from SFMC
