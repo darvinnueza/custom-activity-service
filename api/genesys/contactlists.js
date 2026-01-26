@@ -57,6 +57,7 @@ module.exports = async (req, res) => {
         const result = (data.entities || []).map(cl => ({
             id: cl.id,
             name: cl.name,
+            divisionId: divisionId
         }));
 
         return res.status(200).json(result);
