@@ -24,44 +24,92 @@ async function getGenesysToken() {
 
 module.exports = async (req, res) => {
     try {
-        if (req.method !== "GET") {
-            return res.status(405).json({ error: "Method Not Allowed" });
-        }
-
-        const { divisionId } = req.query;
-        if (!divisionId) {
-            return res.status(400).json({ error: "Missing query param: divisionId" });
-        }
-
         const baseApi = process.env.GENESYS_BASE_API;
         const token = await getGenesysToken();
 
-        const url = new URL("/api/v2/outbound/contactlists", baseApi);
-        url.searchParams.set("divisionId", divisionId);
+        // =========================
+        // GET /contactlists
+        // =========================
+        if (req.method === "GET") {
+            const { divisionId } = req.query;
 
-        const resp = await fetch(url.toString(), {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
-            },
-        });
+            if (!divisionId) {
+                return res.status(400).json({
+                    error: "Missing query param: divisionId",
+                });
+            }
 
-        if (!resp.ok) {
-            const txt = await resp.text();
-            return res.status(resp.status).json({ error: "Genesys API error", details: txt });
+            const url = new URL("/api/v2/outbound/contactlists", baseApi);
+            url.searchParams.set("divisionId", divisionId);
+
+            const resp = await fetch(url.toString(), {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                },
+            });
+
+            if (!resp.ok) {
+                const txt = await resp.text();
+                return res.status(resp.status).json({
+                    error: "Genesys API error",
+                    details: txt,
+                });
+            }
+
+            const data = await resp.json();
+
+            const result = (data.entities || []).map(cl => ({
+                id: cl.id,
+                name: cl.name,
+                divisionId,
+            }));
+
+            return res.status(200).json(result);
         }
 
-        const data = await resp.json();
+        // =========================
+        // POST /contactlists
+        // =========================
+        if (req.method === "POST") {
+            const resp = await fetch(
+                `${baseApi}/api/v2/outbound/contactlists`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                    body: JSON.stringify(req.body),
+                }
+            );
 
-        // AQUÍ LA MAGIA
-        const result = (data.entities || []).map(cl => ({
-            id: cl.id,
-            name: cl.name,
-            divisionId: divisionId
-        }));
+            if (!resp.ok) {
+                const txt = await resp.text();
+                return res.status(resp.status).json({
+                    error: "Genesys API error",
+                    details: txt,
+                });
+            }
 
-        return res.status(200).json(result);
+            const data = await resp.json();
+
+            return res.status(201).json({
+                id: data.id,
+                name: data.name,
+            });
+        }
+
+        // =========================
+        // METHOD NOT ALLOWED
+        // =========================
+        return res.status(405).json({ error: "Method Not Allowed" });
+
     } catch (e) {
-        return res.status(500).json({ error: "Internal error", message: e.message });
+        return res.status(500).json({
+            error: "Internal error",
+            message: e.message,
+        });
     }
 };
