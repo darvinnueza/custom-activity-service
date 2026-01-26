@@ -24,6 +24,17 @@ async function getGenesysToken() {
 
 module.exports = async (req, res) => {
     try {
+        // =========================
+        // 🔐 AUTH INTERNA (PASO 3)
+        // =========================
+        const auth = req.headers.authorization;
+        if (
+            !auth ||
+            auth !== `Bearer ${process.env.INTERNAL_API_TOKEN}`
+        ) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
         const baseApi = process.env.GENESYS_BASE_API;
         const token = await getGenesysToken();
 
