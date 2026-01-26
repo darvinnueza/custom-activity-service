@@ -28,21 +28,33 @@ module.exports = async (req, res) => {
             return res.status(405).json({ error: "Method Not Allowed" });
         }
 
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return res.status(400).json({ error: "Empty body" });
+        }
+
+        const { name, columnNames, phoneColumns } = req.body;
+
+        if (!name || !Array.isArray(columnNames) || !Array.isArray(phoneColumns)) {
+            return res.status(400).json({
+                error: "Invalid payload",
+                required: ["name", "columnNames", "phoneColumns"]
+            });
+        }
+
         const baseApi = process.env.GENESYS_BASE_API;
         const token = await getGenesysToken();
 
-        const resp = await fetch(
-            `${baseApi}/api/v2/outbound/contactlists`,
-            {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                body: JSON.stringify(req.body),
-            }
-        );
+        const url = new URL("/api/v2/outbound/contactlists", baseApi);
+
+        const resp = await fetch(url.toString(), {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify({ name, columnNames, phoneColumns }),
+        });
 
         if (!resp.ok) {
             const txt = await resp.text();
