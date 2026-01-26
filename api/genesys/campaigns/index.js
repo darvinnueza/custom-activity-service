@@ -24,6 +24,12 @@ async function getGenesysToken() {
 
 module.exports = async (req, res) => {
     try {
+         // ✅ PASO 3 REAL (aquí y solo aquí)
+        const auth = req.headers.authorization;
+        if (!auth || auth !== `Bearer ${process.env.INTERNAL_API_TOKEN}`) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
         // 🔒 SOLO GET
         if (req.method !== "GET") {
             return res.status(405).json({ error: "Method Not Allowed" });
