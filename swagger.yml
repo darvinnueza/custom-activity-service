@@ -125,10 +125,10 @@ paths:
               columnNames:
                 - request_id
                 - contact_key
-                - phone_number
+                - msisdn
                 - status
               phoneColumns:
-                - columnName: phone_number
+                - columnName: msisdn
                   type: cell
       responses:
         "201":
