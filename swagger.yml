@@ -22,7 +22,7 @@ tags:
 
 paths:
 
-  /execute:
+  /sfmc/execute:
     post:
       tags: [SFMC]
       summary: Receive execution event from SFMC
