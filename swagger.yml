@@ -121,15 +121,18 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateContactListRequest"
             example:
-              name: "Lista_Clientes_VoiceBot_Claro_1"
+              name: "Lista_Clientes_VoiceBot_Claro"
               columnNames:
                 - request_id
                 - contact_key
                 - msisdn
                 - status
+                - activityId
               phoneColumns:
                 - columnName: msisdn
                   type: cell
+              division:
+                id: "c36e51ad-bec1-4117-9fd3-9c1d22147888"
       responses:
         "201":
           description: Created
@@ -419,6 +422,7 @@ components:
         - name
         - columnNames
         - phoneColumns
+        - division
       properties:
         name:
           type: string
@@ -442,6 +446,13 @@ components:
                 type: string
               type:
                 type: string
+        division:
+          type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
 
     UpdateCampaignRequest:
       type: object
