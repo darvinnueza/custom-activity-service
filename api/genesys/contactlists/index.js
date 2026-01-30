@@ -76,7 +76,7 @@ module.exports = async (req, res) => {
                 divisionId,
             }));
 
-            return res.status(200).json(result);
+            return res.status(200).json({ entities: result });
         }
 
         // =========================
