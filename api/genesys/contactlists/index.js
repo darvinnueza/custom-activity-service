@@ -25,14 +25,13 @@ async function getGenesysToken() {
 module.exports = async (req, res) => {
     try {
         // =========================
-        // 🔐 AUTH INTERNA (PASO 3)
+        // 🔐 AUTH INTERNA
         // =========================
         const auth = req.headers.authorization;
-        if (
-            !auth ||
-            auth !== `Bearer ${process.env.INTERNAL_API_TOKEN}`
-        ) {
-            return res.status(401).json({ error: "Unauthorized" });
+        const expected = process.env.INTERNAL_TOKEN || process.env.INTERNAL_API_TOKEN;
+
+        if (!auth || auth !== `Bearer ${expected}`) {
+        return res.status(401).json({ error: "Unauthorized" });
         }
 
         const baseApi = process.env.GENESYS_BASE_API;
@@ -42,81 +41,77 @@ module.exports = async (req, res) => {
         // GET /contactlists
         // =========================
         if (req.method === "GET") {
-            const { divisionId } = req.query;
+        const { divisionId } = req.query;
 
-            if (!divisionId) {
-                return res.status(400).json({
-                    error: "Missing query param: divisionId",
-                });
-            }
-
-            const url = new URL("/api/v2/outbound/contactlists", baseApi);
-            url.searchParams.set("divisionId", divisionId);
-
-            const resp = await fetch(url.toString(), {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: "application/json",
-                },
+        if (!divisionId) {
+            return res.status(400).json({
+            error: "Missing query param: divisionId",
             });
+        }
 
-            if (!resp.ok) {
-                const txt = await resp.text();
-                return res.status(resp.status).json({
-                    error: "Genesys API error",
-                    details: txt,
-                });
-            }
+        const url = new URL("/api/v2/outbound/contactlists", baseApi);
+        url.searchParams.set("divisionId", divisionId);
 
-            const data = await resp.json();
+        const resp = await fetch(url.toString(), {
+            headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            },
+        });
 
-            const result = (data.entities || []).map(cl => ({
-                id: cl.id,
-                name: cl.name,
-                divisionId,
-            }));
+        if (!resp.ok) {
+            const txt = await resp.text();
+            return res.status(resp.status).json({
+            error: "Genesys API error",
+            details: txt,
+            });
+        }
 
-            return res.status(200).json({ entities: result });
+        const data = await resp.json();
+
+        const result = (data.entities || []).map((cl) => ({
+            id: cl.id,
+            name: cl.name,
+            divisionId,
+        }));
+
+        // ✅ Swagger: ContactListResponse.entities
+        return res.status(200).json({ entities: result });
         }
 
         // =========================
         // POST /contactlists
         // =========================
         if (req.method === "POST") {
-            const resp = await fetch(
-                `${baseApi}/api/v2/outbound/contactlists`,
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                    },
-                    body: JSON.stringify(req.body),
-                }
-            );
+        const resp = await fetch(`${baseApi}/api/v2/outbound/contactlists`, {
+            method: "POST",
+            headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            },
+            body: JSON.stringify(req.body),
+        });
 
-            if (!resp.ok) {
-                const txt = await resp.text();
-                return res.status(resp.status).json({
-                    error: "Genesys API error",
-                    details: txt,
-                });
-            }
-
-            const data = await resp.json();
-
-            return res.status(201).json({
-                id: data.id,
-                name: data.name,
+        if (!resp.ok) {
+            const txt = await resp.text();
+            return res.status(resp.status).json({
+            error: "Genesys API error",
+            details: txt,
             });
         }
 
-        // =========================
-        // METHOD NOT ALLOWED
-        // =========================
-        return res.status(405).json({ error: "Method Not Allowed" });
+        const data = await resp.json();
 
+        // ✅ Swagger: ContactList (incluye divisionId)
+        return res.status(201).json({
+            id: data.id,
+            name: data.name,
+            divisionId: data.division?.id || req.body?.divisionId || null,
+        });
+        }
+
+        return res.status(405).json({ error: "Method Not Allowed" });
     } catch (e) {
         return res.status(500).json({
             error: "Internal error",
