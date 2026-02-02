@@ -96,6 +96,72 @@ paths:
                 properties:
                   ok:
                     type: boolean
+  /sfmc/publish:
+    post:
+      tags: [SFMC]
+      summary: Publish Custom Activity
+      description: Endpoint called by SFMC when the Journey is published.
+      operationId: publishActivity
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Activity published
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+  /sfmc/validate:
+    post:
+      tags: [SFMC]
+      summary: Validate Custom Activity
+      description: Endpoint called by SFMC to validate the activity before activation.
+      operationId: validateActivity
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Activity valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+  /sfmc/stop:
+    post:
+      tags: [SFMC]
+      summary: Stop Custom Activity
+      description: Endpoint called by SFMC when the Journey is stopped.
+      operationId: stopActivity
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Activity stopped
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
 
   /genesys/contactlists:
     get:
