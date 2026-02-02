@@ -74,6 +74,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /sfmc/save:
+    post:
+      tags: [SFMC]
+      summary: Save Custom Activity configuration
+      description: Endpoint called by SFMC when the activity configuration is saved.
+      operationId: saveActivity
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Configuration saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
 
   /genesys/contactlists:
     get:
